@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Supervisor Workspace — BUP ICT &amp; CSE Thesis Management System</title>
+<link rel="icon" href="https://bup.edu.bd/public/upload/logo/202306071686132726.svg">
+<link rel="stylesheet" href="assets/styles.css">
+</head>
+<body>
+<script src="assets/data.js"></script>
+<script src="assets/common.js"></script>
+<script>
+if (!requireRole("supervisor")) { /* redirected */ }
+else {
+
+const SECTIONS = [
+  ["overview","Overview"],["my-students","My Students"],["thesis-teams","Thesis Teams"],
+  ["pending-reviews","Pending Reviews"],["meetings","Meetings"],["feedback","Feedback"],
+  ["documents","Documents"],["announcements","Announcements"],["profile","Profile"]
+];
+
+const section = qs("section") || "overview";
+const f = getFaculty(DATA.users.supervisor.facultyId);
+
+function wsSidebar(active) {
+  return `
+  <aside class="ws-sidebar">
+    <div class="ws-title">Supervisor Workspace</div>
+    <ul>
+      ${SECTIONS.map(([slug,label])=>`<li><a href="supervisor-workspace.html?section=${slug}" class="${slug===active?'active':''}">${esc(label)}</a></li>`).join("")}
+    </ul>
+  </aside>`;
+}
+function wsHeader(title, sub) {
+  return `<div class="ws-header"><div><h2>${esc(title)}</h2><div class="sub">${esc(sub)}</div></div></div>`;
+}
+
+function overview() {
+  const teams = DATA.teams;
+  const pending = DATA.tasks.filter(t=>t.status==="Submitted" || t.status==="Revision Required").length;
+  return `
+  ${wsHeader("Overview", "Supervision summary")}
+  <div class="dash-grid">
+    <div class="dash-tile"><div class="lbl">Assigned Students</div><div class="val">${teams.reduce((s,t)=>s+t.members.length,0)}</div></div>
+    <div class="dash-tile"><div class="lbl">Thesis Teams</div><div class="val">${teams.length}</div></div>
+    <div class="dash-tile"><div class="lbl">Pending Reviews</div><div class="val">${pending}</div></div>
+    <div class="dash-tile"><div class="lbl">Upcoming Meetings</div><div class="val">${DATA.meetings.length}</div></div>
+  </div>
+  <div class="card"><h3 class="card-title">Recent Activity</h3>
+    <ul class="pub-list">
+      <li>Submitted: Progress Report Outline (Team 001) — awaiting review</li>
+      <li>Revision requested: Literature Review Draft (Team 001)</li>
+      <li>Meeting scheduled: Milestone Review — 16/04/2026</li>
+      <li>New announcement published: Revised Progress Report Template</li>
+    </ul>
+  </div>
+  <div class="card"><h3 class="card-title">Supervisor Workflow</h3>
+    <p class="text-muted">View assigned students → View thesis/topic → Review submissions → Add feedback → Request revision → Approve → Update milestone → Schedule meeting → Monitor progress.</p>
+  </div>`;
+}
+
+function myStudents() {
+  return `
+  ${wsHeader("My Students", "Students currently under supervision")}
+  <div class="card"><div class="table-wrap"><table>
+    <thead><tr><th>Name</th><th>Student ID</th><th>Department</th><th>Thesis</th></tr></thead>
+    <tbody>
+      <tr><td>Md. Sadman Rahman</td><td>249090057</td><td>ICT</td><td>Deep CNN Approach for Camera Model Identification</td></tr>
+      <tr><td>Arafat Hossain</td><td>24549010271</td><td>ICT</td><td>Deep CNN Approach for Camera Model Identification</td></tr>
+      <tr><td>Sadia Islam</td><td>24549010353</td><td>ICT</td><td>Deep CNN Approach for Camera Model Identification</td></tr>
+    </tbody>
+  </table></div></div>`;
+}
+
+function teamsView() {
+  return `
+  ${wsHeader("Thesis Teams", "Teams assigned under supervision")}
+  ${DATA.teams.map(tm=>{
+    const th = DATA.theses.find(x=>x.id===tm.thesisId);
+    return `<div class="card">
+      <h3 class="card-title">${esc(th?th.title:"Team")}</h3>
+      <p class="text-sm">Team ID: ${esc(tm.id)} · Members: ${tm.members.length}</p>
+      <div class="mt-1"><a class="btn btn-secondary btn-sm" href="team-workspace.html?id=${tm.id}">Open Team Workspace</a></div>
+    </div>`;
+  }).join("")}`;
+}
+
+function pending() {
+  const list = DATA.tasks.filter(t=>t.status==="Submitted" || t.status==="Revision Required" || t.status==="In Progress");
+  return `
+  ${wsHeader("Pending Reviews", "Submissions and tasks awaiting review")}
+  ${list.map(t=>`<div class="card">
+    <h3 class="card-title">${esc(t.title)}</h3>
+    <p class="text-sm text-muted">Milestone: ${esc(t.milestone)} · Due ${esc(t.due)} · Status: ${esc(t.status)}</p>
+    <div class="mt-1">
+      <button class="btn btn-primary btn-sm" onclick="alert('Submission approved.')">Approve</button>
+      <button class="btn btn-secondary btn-sm" onclick="alert('Revision requested.')">Request Revision</button>
+      <button class="btn btn-secondary btn-sm" onclick="alert('Feedback form opened.')">Add Feedback</button>
+    </div>
+  </div>`).join("")}`;
+}
+
+function meetings() {
+  return `
+  ${wsHeader("Meetings", "Scheduled meetings")}
+  ${DATA.meetings.map(m=>`<div class="card"><h3 class="card-title">${esc(m.title)}</h3>
+    <div class="text-sm">${esc(m.date)} · ${esc(m.time)} · ${esc(m.location)}</div>
+    <p class="mt-1"><strong>Agenda:</strong> ${esc(m.agenda)}</p></div>`).join("")}
+  <div class="card"><h3 class="card-title">Schedule New Meeting</h3>
+    <div class="form-row">
+      <div class="form-group"><label>Title</label><input type="text" value="New Meeting"></div>
+      <div class="form-group"><label>Date</label><input type="text" value="20/04/2026" placeholder="DD/MM/YYYY"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>Time</label><input type="text" value="10:00 AM"></div>
+      <div class="form-group"><label>Location</label><input type="text" value="Faculty Room"></div>
+    </div>
+    <button class="btn btn-primary" onclick="alert('Meeting scheduled.')">Schedule Meeting</button>
+  </div>`;
+}
+
+function feedbackView() {
+  return `
+  ${wsHeader("Feedback", "Feedback provided to teams")}
+  ${DATA.feedback.map(fb=>`<div class="card"><h3 class="card-title">${esc(fb.on)}</h3>
+    <p class="text-sm text-muted">${esc(fb.date)} · <span class="badge ${fb.status==='Approved'?'badge-green':'badge-amber'}">${esc(fb.status)}</span></p>
+    <p class="mt-1">${esc(fb.comment)}</p></div>`).join("")}`;
+}
+
+function documentsView() {
+  return `
+  ${wsHeader("Documents", "Documents shared with teams")}
+  <div class="card"><div class="table-wrap"><table>
+    <thead><tr><th>Document</th><th>Uploaded By</th><th>Date</th></tr></thead>
+    <tbody>${DATA.documents.map(d=>`<tr><td>${esc(d.name)}</td><td>${esc(d.uploadedBy)}</td><td>${esc(d.uploaded)}</td></tr>`).join("")}</tbody>
+  </table></div></div>`;
+}
+
+function announcements() {
+  return `
+  ${wsHeader("Announcements", "Departmental and system announcements")}
+  ${DATA.announcements.map(a=>`<div class="card"><h3 class="card-title">${esc(a.title)}</h3>
+    <p class="text-sm text-muted">${esc(a.date)} · Audience: ${esc(a.audience)}</p>
+    <p class="mt-1">${esc(a.body)}</p></div>`).join("")}`;
+}
+
+function profileView() {
+  return `
+  ${wsHeader("Profile", "Your faculty profile as shown to students")}
+  <div class="card"><div class="flex gap-2 items-center flex-wrap">
+    <img class="faculty-photo-lg" src="${esc(f.photo)}" alt="${esc(f.name)}" onerror="this.style.display='none'">
+    <div>
+      <h3 class="card-title">${esc(f.name)}</h3>
+      <p class="text-muted">${esc(f.designation)} · Department of ${esc(f.department)}</p>
+      <p class="text-muted">${esc(f.email)}</p>
+      <p class="text-sm text-muted">Last updated: ${esc(f.lastUpdated)}</p>
+    </div>
+  </div></div>
+  <div class="card"><h3 class="card-title">Research Areas</h3>
+    <div class="tag-list">${f.researchAreas.map(a=>`<span class="tag">${esc(a)}</span>`).join("")}</div>
+  </div>
+  <div class="card"><h3 class="card-title">Biography</h3><p>${esc(f.bio)}</p></div>
+  <p class="text-sm"><a href="supervisor-detail.html?id=${f.id}">Open public profile →</a></p>`;
+}
+
+let content;
+switch(section) {
+  case "my-students": content = myStudents(); break;
+  case "thesis-teams": content = teamsView(); break;
+  case "pending-reviews": content = pending(); break;
+  case "meetings": content = meetings(); break;
+  case "feedback": content = feedbackView(); break;
+  case "documents": content = documentsView(); break;
+  case "announcements": content = announcements(); break;
+  case "profile": content = profileView(); break;
+  default: content = overview();
+}
+
+const body = `
+  <section class="page-header"><div class="container">
+    <h1>Supervisor Workspace</h1>
+    <p>${esc(f.name)} · ${esc(f.designation)} · Department of ${esc(f.department)}</p>
+  </div></section>
+  <div class="container workspace-layout">
+    ${wsSidebar(section)}
+    <div class="ws-main">${content}</div>
+  </div>`;
+
+mountPage("workspace", body);
+}
+</script>
+</body>
+</html>

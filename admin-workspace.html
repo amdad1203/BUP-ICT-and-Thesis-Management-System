@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin Workspace — BUP ICT &amp; CSE Thesis Management System</title>
+<link rel="icon" href="https://bup.edu.bd/public/upload/logo/202306071686132726.svg">
+<link rel="stylesheet" href="assets/styles.css">
+</head>
+<body>
+<script src="assets/data.js"></script>
+<script src="assets/common.js"></script>
+<script>
+if (!requireRole("admin")) { /* redirected */ }
+else {
+
+const SECTIONS = [
+  ["overview","Overview"],["users","Users"],["students","Students"],["supervisors","Supervisors"],
+  ["thesis-records","Thesis Records"],["departments","Departments"],["research-areas","Research Areas"],
+  ["assignments","Assignments"],["reports","Reports"],["announcements","Announcements"],["settings","System Settings"]
+];
+
+const section = qs("section") || "overview";
+
+function wsSidebar(active) {
+  return `
+  <aside class="ws-sidebar">
+    <div class="ws-title">Admin Workspace</div>
+    <ul>
+      ${SECTIONS.map(([slug,label])=>`<li><a href="admin-workspace.html?section=${slug}" class="${slug===active?'active':''}">${esc(label)}</a></li>`).join("")}
+    </ul>
+  </aside>`;
+}
+function wsHeader(title, sub) {
+  return `<div class="ws-header"><div><h2>${esc(title)}</h2><div class="sub">${esc(sub)}</div></div></div>`;
+}
+
+function overview() {
+  return `
+  ${wsHeader("Overview", "System-wide summary")}
+  <div class="dash-grid">
+    <div class="dash-tile"><div class="lbl">Total Users</div><div class="val">128</div></div>
+    <div class="dash-tile"><div class="lbl">Students</div><div class="val">96</div></div>
+    <div class="dash-tile"><div class="lbl">Supervisors</div><div class="val">14</div></div>
+    <div class="dash-tile"><div class="lbl">Thesis Records</div><div class="val">${DATA.theses.length}</div></div>
+  </div>
+  <div class="grid-2">
+    <div class="card"><h3 class="card-title">Departments</h3>
+      <ul class="pub-list"><li>ICT — Information and Communication Technology</li><li>CSE — Computer Science and Engineering</li></ul>
+    </div>
+    <div class="card"><h3 class="card-title">Recent Admin Actions</h3>
+      <ul class="pub-list"><li>Assigned supervisor to Thesis th-002</li><li>Added research area: Explainable AI</li><li>Published announcement: Revised Progress Report Template</li></ul>
+    </div>
+  </div>`;
+}
+
+function users() {
+  return `
+  ${wsHeader("Users", "All system users")}
+  <div class="card"><div class="table-wrap"><table>
+    <thead><tr><th>Name</th><th>Role</th><th>Email</th><th>Status</th></tr></thead>
+    <tbody>
+      <tr><td>Md. Sadman Rahman</td><td>Student</td><td>sadman.ict22@bup.edu.bd</td><td><span class="badge badge-green">Active</span></td></tr>
+      <tr><td>Md. Maynul Islam</td><td>Supervisor</td><td>maynul@bup.edu.bd</td><td><span class="badge badge-green">Active</span></td></tr>
+      <tr><td>Nazneen Akhter</td><td>Supervisor</td><td>nazneen.akhter@bup.edu.bd</td><td><span class="badge badge-green">Active</span></td></tr>
+      <tr><td>System Administrator</td><td>Admin</td><td>admin@bup.edu.bd</td><td><span class="badge badge-green">Active</span></td></tr>
+    </tbody>
+  </table></div></div>`;
+}
+
+function students() {
+  return `
+  ${wsHeader("Students", "Registered students")}
+  <div class="card"><div class="table-wrap"><table>
+    <thead><tr><th>Name</th><th>Student ID</th><th>Department</th><th>Batch</th><th>Thesis</th></tr></thead>
+    <tbody>
+      <tr><td>Md. Sadman Rahman</td><td>249090057</td><td>ICT</td><td>2022</td><td>th-002</td></tr>
+      <tr><td>Nusrat Jahan</td><td>24549010077</td><td>ICT</td><td>2021</td><td>th-001</td></tr>
+      <tr><td>Farhan Hossain</td><td>24549010221</td><td>CSE</td><td>2022</td><td>th-003</td></tr>
+      <tr><td>Rima Chakma</td><td>24549010319</td><td>CSE</td><td>2023</td><td>th-009</td></tr>
+    </tbody>
+  </table></div></div>`;
+}
+
+function supervisors() {
+  return `
+  ${wsHeader("Supervisors", "Faculty members")}
+  <div class="card"><div class="table-wrap"><table>
+    <thead><tr><th>Name</th><th>Designation</th><th>Department</th><th>Email</th></tr></thead>
+    <tbody>${DATA.faculty.map(f=>`<tr><td><a href="supervisor-detail.html?id=${f.id}">${esc(f.name)}</a></td><td>${esc(f.designation)}</td><td>${esc(f.department)}</td><td>${esc(f.email)}</td></tr>`).join("")}</tbody>
+  </table></div></div>`;
+}
+
+function thesisRecords() {
+  return `
+  ${wsHeader("Thesis Records", "All thesis records")}
+  <div class="card"><div class="table-wrap"><table>
+    <thead><tr><th>ID</th><th>Title</th><th>Dept</th><th>Supervisor</th><th>Status</th></tr></thead>
+    <tbody>${DATA.theses.map(t=>{
+      const sup = getFaculty(t.supervisorId);
+      return `<tr><td>${esc(t.id)}</td><td><a href="thesis-detail.html?id=${t.id}">${esc(t.title)}</a></td><td>${esc(t.department)}</td><td>${sup?esc(sup.name):"—"}</td><td>${esc(t.status)}</td></tr>`;
+    }).join("")}</tbody>
+  </table></div></div>`;
+}
+
+function departments() {
+  return `
+  ${wsHeader("Departments", "Academic departments")}
+  <div class="grid-2">
+    <div class="card"><h3 class="card-title">ICT</h3><p>Department of Information and Communication Technology, Faculty of Science &amp; Technology.</p></div>
+    <div class="card"><h3 class="card-title">CSE</h3><p>Department of Computer Science and Engineering, Faculty of Science &amp; Technology.</p></div>
+  </div>`;
+}
+
+function researchAreas() {
+  return `
+  ${wsHeader("Research Areas", "Configured research areas")}
+  <div class="card"><div class="table-wrap"><table>
+    <thead><tr><th>Area</th><th>Department</th><th>Records</th></tr></thead>
+    <tbody>${DATA.researchAreas.map(a=>`<tr><td>${esc(a.name)}</td><td>${esc(a.department)}</td><td>${a.count}</td></tr>`).join("")}</tbody>
+  </table></div></div>`;
+}
+
+function assignments() {
+  return `
+  ${wsHeader("Assignments", "Supervisor–student assignments")}
+  <div class="card"><div class="table-wrap"><table>
+    <thead><tr><th>Thesis</th><th>Supervisor</th><th>Team</th><th>Action</th></tr></thead>
+    <tbody>${DATA.theses.slice(0,6).map(t=>{
+      const sup = getFaculty(t.supervisorId);
+      return `<tr><td>${esc(t.title)}</td><td>${sup?esc(sup.name):"—"}</td><td>${esc(t.students.join(", "))}</td><td><button class="btn btn-secondary btn-sm" onclick="alert('Assignment updated.')">Change</button></td></tr>`;
+    }).join("")}</tbody>
+  </table></div></div>`;
+}
+
+function reports() {
+  return `
+  ${wsHeader("Reports", "System reports")}
+  <div class="grid-2">
+    <div class="card"><h3 class="card-title">Thesis by Status</h3>
+      <ul class="pub-list">
+        <li>Completed: ${DATA.theses.filter(t=>t.status==="Completed").length}</li>
+        <li>In Progress: ${DATA.theses.filter(t=>t.status==="In Progress").length}</li>
+        <li>Proposal: ${DATA.theses.filter(t=>t.status==="Proposal").length}</li>
+      </ul>
+    </div>
+    <div class="card"><h3 class="card-title">Thesis by Department</h3>
+      <ul class="pub-list">
+        <li>ICT: ${DATA.theses.filter(t=>t.department==="ICT").length}</li>
+        <li>CSE: ${DATA.theses.filter(t=>t.department==="CSE").length}</li>
+      </ul>
+    </div>
+  </div>`;
+}
+
+function announcements() {
+  return `
+  ${wsHeader("Announcements", "Manage announcements")}
+  ${DATA.announcements.map(a=>`<div class="card"><h3 class="card-title">${esc(a.title)}</h3>
+    <p class="text-sm text-muted">${esc(a.date)} · Audience: ${esc(a.audience)}</p>
+    <p class="mt-1">${esc(a.body)}</p></div>`).join("")}
+  <div class="card"><h3 class="card-title">Create Announcement</h3>
+    <div class="form-group"><label>Title</label><input type="text" placeholder="Announcement title"></div>
+    <div class="form-group"><label>Body</label><textarea placeholder="Write announcement..."></textarea></div>
+    <div class="form-group"><label>Audience</label><select><option>All</option><option>Students</option><option>Supervisors</option></select></div>
+    <button class="btn btn-primary" onclick="alert('Announcement published.')">Publish</button>
+  </div>`;
+}
+
+function settings() {
+  return `
+  ${wsHeader("System Settings", "Basic system configuration")}
+  <div class="card"><h3 class="card-title">General</h3>
+    <div class="form-group"><label>System Name</label><input type="text" value="BUP ICT & CSE Thesis Management System"></div>
+    <div class="form-group"><label>Support Email</label><input type="email" value="info@bup.edu.bd"></div>
+    <div class="form-group"><label>Academic Year</label><input type="text" value="2025–2026"></div>
+    <button class="btn btn-primary" onclick="alert('Settings saved.')">Save Settings</button>
+  </div>`;
+}
+
+let content;
+switch(section) {
+  case "users": content = users(); break;
+  case "students": content = students(); break;
+  case "supervisors": content = supervisors(); break;
+  case "thesis-records": content = thesisRecords(); break;
+  case "departments": content = departments(); break;
+  case "research-areas": content = researchAreas(); break;
+  case "assignments": content = assignments(); break;
+  case "reports": content = reports(); break;
+  case "announcements": content = announcements(); break;
+  case "settings": content = settings(); break;
+  default: content = overview();
+}
+
+const body = `
+  <section class="page-header"><div class="container">
+    <h1>Administrator Workspace</h1>
+    <p>System administration · ${esc(DATA.users.admin.name)}</p>
+  </div></section>
+  <div class="container workspace-layout">
+    ${wsSidebar(section)}
+    <div class="ws-main">${content}</div>
+  </div>`;
+
+mountPage("workspace", body);
+}
+</script>
+</body>
+</html>

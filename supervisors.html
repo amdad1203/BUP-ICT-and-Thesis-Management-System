@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Supervisors — BUP ICT &amp; CSE Thesis Management System</title>
+<link rel="icon" href="https://bup.edu.bd/public/upload/logo/202306071686132726.svg">
+<link rel="stylesheet" href="assets/styles.css">
+</head>
+<body>
+<script src="assets/data.js"></script>
+<script src="assets/common.js"></script>
+<script>
+const areaOpts = ['<option value="All">All</option>']
+  .concat([...new Set(DATA.faculty.flatMap(f=>f.researchAreas))].sort().map(a=>`<option value="${esc(a)}">${esc(a)}</option>`)).join("");
+
+const body = `
+  <section class="page-header"><div class="container">
+    <h1>Find a Supervisor</h1>
+    <p>Faculty members from the Departments of ICT and CSE.</p>
+  </div></section>
+  <section class="section"><div class="container">
+    <div class="search-bar">
+      <input type="search" id="supQ" placeholder="Search by name...">
+      <button class="btn btn-primary" onclick="applySupervisors()">Search</button>
+      <button class="btn btn-secondary" onclick="resetSupervisors()">Reset</button>
+    </div>
+    <div class="filter-bar">
+      <div class="filter-group"><label>Department</label>
+        <select id="supDept">
+          <option value="All">All</option>
+          <option value="ICT">ICT</option>
+          <option value="CSE">CSE</option>
+        </select>
+      </div>
+      <div class="filter-group"><label>Research Area</label><select id="supArea">${areaOpts}</select></div>
+    </div>
+    <div id="supResults"></div>
+  </div></section>
+`;
+
+mountPage("supervisors", body);
+
+function applySupervisors() {
+  const q = document.getElementById("supQ").value.trim().toLowerCase();
+  const dept = document.getElementById("supDept").value;
+  const area = document.getElementById("supArea").value;
+
+  const list = DATA.faculty.filter(f => {
+    if (dept !== "All" && f.department !== dept) return false;
+    if (area !== "All" && !f.researchAreas.includes(area)) return false;
+    if (q && !f.name.toLowerCase().includes(q)) return false;
+    return true;
+  });
+
+  const box = document.getElementById("supResults");
+  if (!list.length) {
+    box.innerHTML = `<div class="empty-state">No supervisors match the current filters.</div>`;
+    return;
+  }
+  box.innerHTML = `<div class="faculty-grid">${list.map(facultyCard).join("")}</div>`;
+}
+
+function resetSupervisors() {
+  document.getElementById("supQ").value = "";
+  document.getElementById("supDept").value = "All";
+  document.getElementById("supArea").value = "All";
+  applySupervisors();
+}
+
+applySupervisors();
+document.getElementById("supQ").addEventListener("keydown", e => { if (e.key === "Enter") applySupervisors(); });
+</script>
+</body>
+</html>

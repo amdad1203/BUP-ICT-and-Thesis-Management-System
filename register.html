@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Student Registration — BUP ICT &amp; CSE Thesis Management System</title>
+<link rel="icon" href="https://bup.edu.bd/public/upload/logo/202306071686132726.svg">
+<link rel="stylesheet" href="assets/styles.css">
+</head>
+<body>
+<script src="assets/data.js"></script>
+<script src="assets/common.js"></script>
+<script>
+document.body.innerHTML = `
+  ${renderNavbar("")}
+  <section class="page-header"><div class="container"><h1>Student Registration</h1><p>Public registration is available for students only.</p></div></section>
+  <section class="section"><div class="container" style="max-width:640px;">
+    <div class="card">
+      <div class="form-row">
+        <div class="form-group"><label>Full Name</label><input type="text" placeholder="Full name"></div>
+        <div class="form-group"><label>Student ID</label><input type="text" placeholder="e.g. 249090057"></div>
+      </div>
+      <div class="form-group"><label>Email</label><input type="email" placeholder="you@bup.edu.bd"></div>
+      <div class="form-row">
+        <div class="form-group"><label>Department</label><select><option>ICT</option><option>CSE</option></select></div>
+        <div class="form-group"><label>Batch</label><input type="text" placeholder="e.g. 2022"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>Password</label><input type="password"></div>
+        <div class="form-group"><label>Confirm Password</label><input type="password"></div>
+      </div>
+      <button class="btn btn-primary" onclick="alert('Registration recorded.')">Register</button>
+      <p class="text-sm mt-2">Already registered? <a href="login.html">Login</a>.</p>
+    </div>
+  </div></section>
+  ${renderFooter()}
+`;
+</script>
+</body>
+</html>

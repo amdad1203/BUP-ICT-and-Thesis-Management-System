@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Team Workspace — BUP ICT &amp; CSE Thesis Management System</title>
+<link rel="icon" href="https://bup.edu.bd/public/upload/logo/202306071686132726.svg">
+<link rel="stylesheet" href="assets/styles.css">
+</head>
+<body>
+<script src="assets/data.js"></script>
+<script src="assets/common.js"></script>
+<script>
+if (!requireLogin()) { /* redirected */ }
+else {
+
+const teamId = qs("id") || "team-001";
+const section = qs("section") || "overview";
+const team = DATA.teams.find(t => t.id === teamId);
+
+if (!team) {
+  mountPage("workspace", `<div class="container section"><h1>Team not found</h1><p class="mt-1"><a href="workspace.html">Back to workspace</a></p></div>`);
+} else {
+  const thesis = DATA.theses.find(t => t.id === team.thesisId);
+  const tasks = DATA.tasks.filter(t => t.teamId === teamId);
+  const meetings = DATA.meetings.filter(m => m.teamId === teamId);
+  const docs = DATA.documents.filter(d => d.teamId === teamId);
+
+  const SECTIONS = [
+    ["overview","Overview"],["tasks","Tasks"],["timeline","Timeline"],
+    ["documents","Documents"],["meetings","Meetings"],["announcements","Announcements"]
+  ];
+
+  function wsSidebar(active) {
+    return `
+    <aside class="ws-sidebar">
+      <div class="ws-title">Team Workspace</div>
+      <ul>
+        ${SECTIONS.map(([slug,label])=>`<li><a href="team-workspace.html?id=${encodeURIComponent(teamId)}&section=${slug}" class="${slug===active?'active':''}">${esc(label)}</a></li>`).join("")}
+      </ul>
+    </aside>`;
+  }
+  function wsHeader(title, sub) {
+    return `<div class="ws-header"><div><h2>${esc(title)}</h2><div class="sub">${esc(sub)}</div></div></div>`;
+  }
+
+  function overview() {
+    return `
+    ${wsHeader("Overview", "Team and thesis summary")}
+    <div class="card"><h3 class="card-title">${esc(thesis?thesis.title:"Team")}</h3>
+      <p class="text-sm text-muted">Research Area: ${esc(thesis?thesis.researchArea:"—")} · Status: ${esc(thesis?thesis.status:"—")}</p>
+      <div class="table-wrap mt-2"><table>
+        <thead><tr><th>Member</th><th>Student ID</th><th>Role</th></tr></thead>
+        <tbody>${team.members.map(mm=>`<tr><td>${esc(mm.name)}</td><td>${esc(mm.sid)}</td><td>${esc(mm.role)}</td></tr>`).join("")}</tbody>
+      </table></div>
+    </div>`;
+  }
+  function tasksView() {
+    const states = ["To Do","In Progress","Submitted","Revision Required","Completed"];
+    return `
+    ${wsHeader("Tasks", "Team task board")}
+    <div class="task-board">
+      ${states.map(s=>`<div class="task-col"><h4>${esc(s)}</h4>
+        ${tasks.filter(t=>t.status===s).map(t=>`<div class="task-card"><div class="t-title">${esc(t.title)}</div><div class="t-meta">${esc(t.assignee)} · ${esc(t.due)}</div></div>`).join("")}
+      </div>`).join("")}
+    </div>`;
+  }
+  function timeline() {
+    return `
+    ${wsHeader("Timeline", "Milestones")}
+    <div class="card"><div class="timeline">
+      ${DATA.milestones.map(ms=>`<div class="timeline-item ${ms.status==='done'?'done':''} ${ms.status==='current'?'current':''}"><div class="t-label">${esc(ms.label)}</div><div class="t-date">${esc(ms.date)}</div></div>`).join("")}
+    </div></div>`;
+  }
+  function documentsView() {
+    return `
+    ${wsHeader("Documents", "Team documents")}
+    <div class="card"><div class="table-wrap"><table>
+      <thead><tr><th>Document</th><th>Size</th><th>Uploaded By</th><th>Date</th></tr></thead>
+      <tbody>${docs.map(d=>`<tr><td>${esc(d.name)}</td><td>${esc(d.size)}</td><td>${esc(d.uploadedBy)}</td><td>${esc(d.uploaded)}</td></tr>`).join("")}</tbody>
+    </table></div></div>`;
+  }
+  function meetingsView() {
+    return `
+    ${wsHeader("Meetings", "Team meetings")}
+    ${meetings.map(m=>`<div class="card"><h3 class="card-title">${esc(m.title)}</h3>
+      <p class="text-sm">${esc(m.date)} · ${esc(m.time)} · ${esc(m.location)}</p>
+      <p class="mt-1">${esc(m.agenda)}</p></div>`).join("")}`;
+  }
+  function announcementsView() {
+    return `
+    ${wsHeader("Announcements", "Announcements affecting this team")}
+    ${DATA.announcements.map(a=>`<div class="card"><h3 class="card-title">${esc(a.title)}</h3>
+      <p class="text-sm text-muted">${esc(a.date)}</p><p class="mt-1">${esc(a.body)}</p></div>`).join("")}`;
+  }
+
+  let content;
+  switch(section) {
+    case "tasks": content = tasksView(); break;
+    case "timeline": content = timeline(); break;
+    case "documents": content = documentsView(); break;
+    case "meetings": content = meetingsView(); break;
+    case "announcements": content = announcementsView(); break;
+    default: content = overview();
+  }
+
+  const body = `
+    <section class="page-header"><div class="container">
+      <h1>Team Workspace</h1>
+      <p>${esc(team.id)} · ${thesis?esc(thesis.title):""}</p>
+    </div></section>
+    <div class="container workspace-layout">
+      ${wsSidebar(section)}
+      <div class="ws-main">${content}</div>
+    </div>`;
+
+  mountPage("workspace", body);
+}
+}
+</script>
+</body>
+</html>

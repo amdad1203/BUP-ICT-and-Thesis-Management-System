@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Supervisor Profile — BUP ICT &amp; CSE Thesis Management System</title>
+<link rel="icon" href="https://bup.edu.bd/public/upload/logo/202306071686132726.svg">
+<link rel="stylesheet" href="assets/styles.css">
+<style>
+  .rating-stars { color: #d9a400; font-size: 18px; letter-spacing: 2px; }
+  .rating-summary { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; }
+  .rating-summary .avg { font-size: 32px; font-weight: 600; color: #315F3A; line-height: 1; }
+  .rating-summary .cnt { font-size: 14px; color: #666; }
+  .review-item { border-bottom: 1px solid #EEF4ED; padding: 14px 0; }
+  .review-item:last-child { border-bottom: none; }
+  .review-head { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 6px; margin-bottom: 6px; }
+  .review-head .rev-name { font-weight: 600; color: #333; font-size: 15px; }
+  .review-head .rev-date { font-size: 13px; color: #777; }
+  .review-dims { display: flex; flex-wrap: wrap; gap: 12px; font-size: 13px; color: #555; margin-bottom: 6px; }
+  .review-dims span strong { color: #333; }
+  .review-text { font-size: 14.5px; color: #444; line-height: 1.55; }
+  .warning-text { color: #c0392b; font-weight: 700; font-size: 14.5px; margin-bottom: 14px; }
+  .rating-form-box { background: #FAFAF7; border: 1px solid #D9DED8; border-radius: 6px; padding: 16px 18px; margin-top: 16px; }
+  .rating-form-box h4 { font-size: 16px; color: #315F3A; margin-bottom: 10px; }
+  .star-input { display: flex; gap: 6px; margin-bottom: 10px; }
+  .star-input span { font-size: 24px; color: #d9d9d9; cursor: pointer; transition: color 0.15s; }
+  .star-input span.active, .star-input span:hover { color: #d9a400; }
+  .dim-rating { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
+  .dim-rating label { font-size: 13px; color: #555; display: block; margin-bottom: 2px; }
+  .dim-rating select { width: 100%; font-family: inherit; font-size: 14px; padding: 5px 8px; border: 1px solid #D9DED8; border-radius: 4px; background: #fff; }
+  .ext-badge { background: #fff3cd; color: #856404; border: 1px solid #f0d98a; font-size: 11.5px; font-weight: 600; padding: 2px 8px; border-radius: 3px; letter-spacing: 0.4px; text-transform: uppercase; }
+</style>
+</head>
+<body>
+<script src="assets/data.js"></script>
+<script src="assets/common.js"></script>
+<script>
+const id = qs("id");
+const f = getFaculty(id);
+
+if (!f) {
+  mountPage("supervisors", `
+    <div class="container section">
+      <h1>Supervisor not found</h1>
+      <p class="mt-1"><a href="supervisors.html">Back to supervisors</a></p>
+    </div>`);
+} else {
+  // Safety guards — fall back to empty arrays if fields are missing
+  const eduArr       = Array.isArray(f.education) ? f.education : [];
+  const areasArr     = Array.isArray(f.researchAreas) ? f.researchAreas : [];
+  const pubsArr      = Array.isArray(f.publications) ? f.publications : [];
+  const confArr      = Array.isArray(f.conferencePapers) ? f.conferencePapers : [];
+  const booksArr     = Array.isArray(f.books) ? f.books : [];
+  const awardsArr    = Array.isArray(f.awards) ? f.awards : [];
+  const coursesArr   = Array.isArray(f.courses) ? f.courses : [];
+  const linksObj     = f.profileLinks || {};
+
+  const edu = eduArr.length ? `<ul class="pub-list">${eduArr.map(e=>`<li>${esc(e)}</li>`).join("")}</ul>` : `<p class="text-muted">No education records listed.</p>`;
+  const areas = areasArr.length ? `<div class="tag-list">${areasArr.map(a=>`<span class="tag">${esc(a)}</span>`).join("")}</div>` : `<p class="text-muted">No research areas listed.</p>`;
+  const journals = pubsArr.length ? `<ul class="pub-list">${pubsArr.map(p=>`
+    <li>${p.authors?`<span>${esc(p.authors)}</span> `:""}<em>${esc(p.title)}</em> <span class="ven">${esc(p.venue)}</span>${p.doi?`<br><span class="doi">DOI: ${esc(p.doi)}</span>`:""}</li>`).join("")}</ul>` :
+    `<p class="text-muted">No journal publications listed.</p>`;
+  const conferences = confArr.length ? `<ul class="pub-list">${confArr.map(p=>`
+    <li><em>${esc(p.title)}</em> <span class="ven">${esc(p.venue)}</span>${p.doi?`<br><span class="doi">DOI: ${esc(p.doi)}</span>`:""}${p.note?`<br><span class="doi">${esc(p.note)}</span>`:""}</li>`).join("")}</ul>` :
+    `<p class="text-muted">No conference papers listed.</p>`;
+  const books = booksArr.length ? `<ul class="pub-list">${booksArr.map(b=>`<li><em>${esc(b.title)}</em> <span class="ven">${esc(b.venue)}</span></li>`).join("")}</ul>` :
+    `<p class="text-muted">No books or dissertations listed.</p>`;
+  const awards = awardsArr.length ? `<ul class="pub-list">${awardsArr.map(a=>`<li>${esc(a)}</li>`).join("")}</ul>` :
+    `<p class="text-muted">No awards listed.</p>`;
+  const courses = coursesArr.length ? `<ul class="pub-list">${coursesArr.map(c=>`<li>${esc(c)}</li>`).join("")}</ul>` :
+    `<p class="text-muted">No courses listed.</p>`;
+  const links = Object.keys(linksObj).length ? `<ul class="pub-list">${Object.entries(linksObj).map(([k,v])=>`<li><strong>${esc(k)}:</strong> <a href="${esc(v)}" target="_blank" rel="noopener">${esc(v)}</a></li>`).join("")}</ul>` :
+    `<p class="text-muted">No profile links listed.</p>`;
+  const supervised = DATA.theses.filter(t=>t.supervisorId===f.id);
+
+  // Ratings — defensive
+  const allRatings = Array.isArray(DATA.ratings) ? DATA.ratings : [];
+  const supervisorRatings = allRatings.filter(r => r.supervisorId === f.id);
+  const avgRating = supervisorRatings.length ? (supervisorRatings.reduce((s, r) => s + r.overall, 0) / supervisorRatings.length).toFixed(1) : "—";
+  const starDisplay = (n) => "★".repeat(n) + "☆".repeat(5 - n);
+
+  const reviewsHTML = supervisorRatings.length ? supervisorRatings.map(r => `
+    <div class="review-item">
+      <div class="review-head">
+        <span class="rev-name">${esc(r.studentName)}</span>
+        <span class="rev-date">${esc(r.date)}</span>
+      </div>
+      <div class="rating-stars">${starDisplay(r.overall)}</div>
+      <div class="review-dims">
+        <span>Availability: <strong>${r.availability}/5</strong></span>
+        <span>Communication: <strong>${r.communication}/5</strong></span>
+        <span>Guidance: <strong>${r.guidance}/5</strong></span>
+      </div>
+      <p class="review-text">${esc(r.review)}</p>
+    </div>
+  `).join("") : `<p class="text-muted">No student reviews have been submitted yet.</p>`;
+
+  // Institution line (uses defensive helpers)
+  const institutionLine = facultyIsExternal(f)
+    ? `${esc(facultyInstitution(f))} <span class="ext-badge">External Supervisor</span>`
+    : `Bangladesh University of Professionals`;
+
+  const body = `
+    <section class="page-header"><div class="container">
+      <p class="text-sm"><a href="supervisors.html">← Back to Supervisors</a></p>
+      <h1 class="mt-1">${esc(f.name)}</h1>
+      <p>${esc(f.designation)} · ${esc(f.departmentFull || f.department)}</p>
+    </div></section>
+    <section class="section"><div class="container">
+      <div class="grid-2">
+        <div class="card">
+          <div class="flex gap-2 items-center flex-wrap">
+            <img class="faculty-photo-lg" src="${esc(f.photo)}" alt="${esc(f.name)}" onerror="this.style.display='none'">
+            <div>
+              <div class="info-block"><div class="il">Name</div><div class="iv">${esc(f.name)}</div></div>
+              <div class="info-block"><div class="il">Designation</div><div class="iv">${esc(f.designation)}</div></div>
+              <div class="info-block"><div class="il">Department</div><div class="iv">${esc(f.department)}</div></div>
+              <div class="info-block"><div class="il">Institution</div><div class="iv">${institutionLine}</div></div>
+              <div class="info-block"><div class="il">Email</div><div class="iv"><a href="mailto:${esc(f.email)}">${esc(f.email)}</a></div></div>
+            </div>
+          </div>
+          <p class="text-sm text-muted mt-2">Last updated: ${esc(f.lastUpdated)}</p>
+        </div>
+        <div class="card">
+          <h2 class="card-title">Biography</h2>
+          <p>${esc(f.bio)}</p>
+        </div>
+      </div>
+
+      <hr class="divider">
+
+      <!-- Student Experience & Ratings Section -->
+      <h2 class="section-title">Student Experience &amp; Ratings</h2>
+      <div class="card">
+        <div class="rating-summary">
+          <div class="avg">${avgRating}</div>
+          <div>
+            <div class="rating-stars">${supervisorRatings.length ? starDisplay(Math.round(avgRating)) : "☆☆☆☆☆"}</div>
+            <div class="cnt">${supervisorRatings.length} student review(s)</div>
+          </div>
+        </div>
+
+        <div class="warning-text">Please maintain courtesy while giving reviews on your respected supervisor.</div>
+
+        <div id="reviewsList">
+          ${reviewsHTML}
+        </div>
+
+        <div class="rating-form-box">
+          <h4>Write a Review</h4>
+          <div class="form-group">
+            <label>Overall Rating</label>
+            <div class="star-input" id="starInput">
+              <span data-val="1">★</span><span data-val="2">★</span><span data-val="3">★</span><span data-val="4">★</span><span data-val="5">★</span>
+            </div>
+          </div>
+          <div class="dim-rating">
+            <div>
+              <label>Availability</label>
+              <select id="rateAvail"><option>1</option><option>2</option><option>3</option><option>4</option><option selected>5</option></select>
+            </div>
+            <div>
+              <label>Communication</label>
+              <select id="rateComm"><option>1</option><option>2</option><option>3</option><option>4</option><option selected>5</option></select>
+            </div>
+            <div>
+              <label>Guidance</label>
+              <select id="rateGuide"><option>1</option><option>2</option><option>3</option><option>4</option><option selected>5</option></select>
+            </div>
+            <div>
+              <label>Meeting Regularity</label>
+              <select id="rateMeet"><option>1</option><option>2</option><option>3</option><option>4</option><option selected>5</option></select>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Your Review</label>
+            <textarea id="reviewText" placeholder="Share your experience... Please be respectful and constructive."></textarea>
+          </div>
+          <button class="btn btn-primary btn-sm" onclick="submitReview()">Submit Review</button>
+        </div>
+      </div>
+
+      <hr class="divider">
+      <h2 class="section-title">Education</h2>${edu}
+      <hr class="divider">
+      <h2 class="section-title">Research Areas</h2>${areas}
+      <hr class="divider">
+      <h2 class="section-title">Journal Publications</h2>${journals}
+      <hr class="divider">
+      <h2 class="section-title">Conference Papers</h2>${conferences}
+      <hr class="divider">
+      <h2 class="section-title">Books / Dissertations</h2>${books}
+      <hr class="divider">
+      <h2 class="section-title">Awards</h2>${awards}
+      <hr class="divider">
+      <h2 class="section-title">Courses Taught</h2>${courses}
+      <hr class="divider">
+      <h2 class="section-title">Profile Links</h2>${links}
+      <hr class="divider">
+      <h2 class="section-title">Supervised Thesis</h2>
+      ${supervised.length ? `<div class="thesis-list">${supervised.map(thesisCard).join("")}</div>` : `<div class="empty-state">No thesis records are linked to this supervisor.</div>`}
+    </div></section>`;
+
+  mountPage("supervisors", body);
+
+  // Star input interaction
+  let selectedOverall = 0;
+  document.querySelectorAll('#starInput span').forEach(star => {
+    star.addEventListener('click', () => {
+      selectedOverall = parseInt(star.dataset.val);
+      document.querySelectorAll('#starInput span').forEach(s => {
+        s.classList.toggle('active', parseInt(s.dataset.val) <= selectedOverall);
+      });
+    });
+    star.addEventListener('mouseenter', () => {
+      const val = parseInt(star.dataset.val);
+      document.querySelectorAll('#starInput span').forEach(s => {
+        s.style.color = parseInt(s.dataset.val) <= val ? '#d9a400' : '#d9d9d9';
+      });
+    });
+    star.addEventListener('mouseleave', () => {
+      document.querySelectorAll('#starInput span').forEach(s => {
+        s.style.color = parseInt(s.dataset.val) <= selectedOverall ? '#d9a400' : '#d9d9d9';
+      });
+    });
+  });
+}
+
+function submitReview() {
+  const overall = document.querySelectorAll('#starInput span.active').length;
+  const avail = document.getElementById('rateAvail').value;
+  const comm = document.getElementById('rateComm').value;
+  const guide = document.getElementById('rateGuide').value;
+  const meet = document.getElementById('rateMeet').value;
+  const text = document.getElementById('reviewText').value.trim();
+
+  if (overall === 0) { alert('Please select an overall rating.'); return; }
+  if (!text) { alert('Please write a short review.'); return; }
+
+  const list = document.getElementById('reviewsList');
+  const newReview = document.createElement('div');
+  newReview.className = 'review-item';
+  newReview.innerHTML = `
+    <div class="review-head">
+      <span class="rev-name">You (Current Session)</span>
+      <span class="rev-date">Just now</span>
+    </div>
+    <div class="rating-stars">${"★".repeat(overall)}${"☆".repeat(5 - overall)}</div>
+    <div class="review-dims">
+      <span>Availability: <strong>${avail}/5</strong></span>
+      <span>Communication: <strong>${comm}/5</strong></span>
+      <span>Guidance: <strong>${guide}/5</strong></span>
+      <span>Meeting Regularity: <strong>${meet}/5</strong></span>
+    </div>
+    <p class="review-text">${text.replace(/</g, "&lt;").replace(/>/g, "&gt;")}</p>
+  `;
+  list.prepend(newReview);
+  document.getElementById('reviewText').value = '';
+  document.querySelectorAll('#starInput span').forEach(s => s.classList.remove('active'));
+  selectedOverall = 0;
+  alert('Review submitted successfully. Thank you for your feedback.');
+}
+</script>
+</body>
+</html>

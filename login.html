@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Login — BUP ICT &amp; CSE Thesis Management System</title>
+<link rel="icon" href="https://bup.edu.bd/public/upload/logo/202306071686132726.svg">
+<link rel="stylesheet" href="assets/styles.css">
+</head>
+<body>
+<script src="assets/data.js"></script>
+<script src="assets/common.js"></script>
+<script>
+document.body.innerHTML = `
+  ${renderNavbar("")}
+  <section class="login-wrap">
+    <div class="login-card">
+      <h1>Sign in to the Thesis Management System</h1>
+      <p class="sub">Bangladesh University of Professionals — ICT &amp; CSE</p>
+      <div class="info-note">Select a role to enter its workflow. No credentials required for this frontend.</div>
+      <div id="deniedMsg"></div>
+      <div class="role-cards" id="roleCards">
+        <div class="role-option selected" data-role="student">
+          <div class="ro-icon">ST</div>
+          <div>
+            <div class="ro-title">Student</div>
+            <div class="ro-desc">Manage your thesis, team, tasks, documents, meetings and feedback.</div>
+          </div>
+        </div>
+        <div class="role-option" data-role="supervisor">
+          <div class="ro-icon">SP</div>
+          <div>
+            <div class="ro-title">Supervisor</div>
+            <div class="ro-desc">Review submissions, provide feedback, schedule meetings, monitor students.</div>
+          </div>
+        </div>
+        <div class="role-option" data-role="admin">
+          <div class="ro-icon">AD</div>
+          <div>
+            <div class="ro-title">Administrator</div>
+            <div class="ro-desc">Manage users, faculty, students, thesis records, research areas, and announcements.</div>
+          </div>
+        </div>
+      </div>
+      <button class="btn btn-primary btn-block" onclick="doLogin()">Continue as <span id="roleName">Student</span></button>
+      <p class="text-sm mt-2">New student? <a href="register.html">Register here</a>. Public registration is available for students only.</p>
+    </div>
+  </section>
+  ${renderFooter()}
+`;
+
+const denied = qs("denied");
+if (denied) {
+  document.getElementById("deniedMsg").innerHTML =
+    `<div class="info-note" style="background:#fbeeec;border-color:#e0b4ad;color:#a33;">
+      You must sign in as <strong>${esc(roleLabel(denied))}</strong> to access that workspace.
+    </div>`;
+}
+
+let selectedRole = "student";
+document.querySelectorAll(".role-option").forEach(el => {
+  el.addEventListener("click", () => {
+    document.querySelectorAll(".role-option").forEach(x => x.classList.remove("selected"));
+    el.classList.add("selected");
+    selectedRole = el.dataset.role;
+    document.getElementById("roleName").textContent = roleLabel(selectedRole);
+  });
+});
+
+function doLogin() {
+  setSession(selectedRole);
+  location.href = roleHome(selectedRole);
+}
+</script>
+</body>
+</html>

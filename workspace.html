@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Workspace — BUP ICT &amp; CSE Thesis Management System</title>
+<link rel="icon" href="https://bup.edu.bd/public/upload/logo/202306071686132726.svg">
+<link rel="stylesheet" href="assets/styles.css">
+</head>
+<body>
+<script src="assets/data.js"></script>
+<script src="assets/common.js"></script>
+<script>
+const s = getSession();
+
+const body = `
+  <section class="page-header"><div class="container">
+    <h1>Workspace</h1>
+    <p>${s ? "Signed in as " + esc(roleLabel(s.role)) + ". Select a role to enter its workspace." : "Select a role to enter the corresponding workspace."}</p>
+  </div></section>
+  <section class="section"><div class="container">
+    <div class="grid-3">
+      <div class="card">
+        <h2 class="card-title">Student Workspace</h2>
+        <p>Manage your thesis, team, tasks, timeline, documents, meetings, feedback and notifications.</p>
+        <a class="btn btn-primary mt-1" href="student-workspace.html">Enter Student Workspace</a>
+      </div>
+      <div class="card">
+        <h2 class="card-title">Supervisor Workspace</h2>
+        <p>View assigned students, thesis teams, pending reviews, meetings, feedback, documents and announcements.</p>
+        <a class="btn btn-primary mt-1" href="supervisor-workspace.html">Enter Supervisor Workspace</a>
+      </div>
+      <div class="card">
+        <h2 class="card-title">Administrator Workspace</h2>
+        <p>Manage users, students, supervisors, thesis records, departments, assignments, reports and announcements.</p>
+        <a class="btn btn-primary mt-1" href="admin-workspace.html">Enter Admin Workspace</a>
+      </div>
+    </div>
+  </div></section>`;
+
+mountPage("workspace", body);
+</script>
+</body>
+</html>

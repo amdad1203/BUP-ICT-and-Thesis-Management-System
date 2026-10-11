@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Explore — BUP ICT &amp; CSE Thesis Management System</title>
+<link rel="icon" href="https://bup.edu.bd/public/upload/logo/202306071686132726.svg">
+<link rel="stylesheet" href="assets/styles.css">
+</head>
+<body>
+<script src="assets/data.js"></script>
+<script src="assets/common.js"></script>
+<script>
+const deptOpts = ['<option value="All">All</option>','<option value="ICT">ICT</option>','<option value="CSE">CSE</option>'].join("");
+const areaOpts = ['<option value="All">All</option>'].concat(DATA.researchAreas.map(a=>`<option value="${esc(a.name)}">${esc(a.name)}</option>`)).join("");
+const years = [...new Set(DATA.theses.map(t=>t.year))].sort().reverse();
+const yearOpts = ['<option value="All">All</option>'].concat(years.map(y=>`<option value="${esc(y)}">${esc(y)}</option>`)).join("");
+const statusOpts = ['<option value="All">All</option>','<option value="Completed">Completed</option>','<option value="In Progress">In Progress</option>','<option value="Proposal">Proposal</option>'].join("");
+
+const body = `
+  <section class="page-header"><div class="container">
+    <h1>Explore Thesis Topics</h1>
+    <p>Search and filter thesis topics, research areas, and keywords across ICT and CSE.</p>
+  </div></section>
+  <section class="section"><div class="container">
+    <div class="search-bar">
+      <input type="search" id="expQ" placeholder="Search thesis topics, research areas, keywords...">
+      <button class="btn btn-primary" onclick="applyExplore()">Search</button>
+      <button class="btn btn-secondary" onclick="resetExplore()">Reset</button>
+    </div>
+    <div class="filter-bar">
+      <div class="filter-group"><label>Department</label><select id="expDept">${deptOpts}</select></div>
+      <div class="filter-group"><label>Research Area</label><select id="expArea">${areaOpts}</select></div>
+      <div class="filter-group"><label>Year</label><select id="expYear">${yearOpts}</select></div>
+      <div class="filter-group"><label>Status</label><select id="expStatus">${statusOpts}</select></div>
+    </div>
+    <div id="exploreResults"></div>
+    <hr class="divider">
+    <h2 class="section-title">Research Areas</h2>
+    <p class="section-sub">Thematic areas represented across ICT and CSE thesis work.</p>
+    <div class="grid-3">
+      ${DATA.researchAreas.map(a => `
+        <div class="card">
+          <div class="card-title" style="font-size:16px;">${esc(a.name)}</div>
+          <div class="card-meta">Department: ${esc(a.department)} · ${a.count} thesis records</div>
+          <div class="mt-1"><a href="#" onclick="filterByArea('${esc(a.name)}');return false;">View related theses →</a></div>
+        </div>`).join("")}
+    </div>
+  </div></section>
+`;
+
+mountPage("explore", body);
+
+function applyExplore() {
+  const q = document.getElementById("expQ").value.trim().toLowerCase();
+  const dept = document.getElementById("expDept").value;
+  const area = document.getElementById("expArea").value;
+  const year = document.getElementById("expYear").value;
+  const status = document.getElementById("expStatus").value;
+
+  const list = DATA.theses.filter(t => {
+    if (dept !== "All" && t.department !== dept) return false;
+    if (area !== "All" && t.researchArea !== area) return false;
+    if (year !== "All" && t.year !== year) return false;
+    if (status !== "All" && t.status !== status) return false;
+    if (q) {
+      const hay = (t.title + " " + t.abstract + " " + t.keywords.join(" ") + " " + t.researchArea).toLowerCase();
+      if (!hay.includes(q)) return false;
+    }
+    return true;
+  });
+
+  const box = document.getElementById("exploreResults");
+  if (!list.length) {
+    box.innerHTML = `<div class="empty-state">No thesis records match the current filters.</div>`;
+    return;
+  }
+  box.innerHTML = `<p class="text-sm text-muted mb-1">Showing ${list.length} record(s).</p>
+    <div class="thesis-list">${list.map(thesisCard).join("")}</div>`;
+}
+
+function resetExplore() {
+  document.getElementById("expQ").value = "";
+  document.getElementById("expDept").value = "All";
+  document.getElementById("expArea").value = "All";
+  document.getElementById("expYear").value = "All";
+  document.getElementById("expStatus").value = "All";
+  applyExplore();
+}
+
+function filterByArea(area) {
+  document.getElementById("expArea").value = area;
+  applyExplore();
+  window.scrollTo(0, 0);
+}
+
+const presetArea = qs("area");
+if (presetArea) document.getElementById("expArea").value = presetArea;
+applyExplore();
+document.getElementById("expQ").addEventListener("keydown", e => { if (e.key === "Enter") applyExplore(); });
+</script>
+</body>
+</html>

@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Thesis Detail — BUP ICT &amp; CSE Thesis Management System</title>
+<link rel="icon" href="https://bup.edu.bd/public/upload/logo/202306071686132726.svg">
+<link rel="stylesheet" href="assets/styles.css">
+</head>
+<body>
+<script src="assets/data.js"></script>
+<script src="assets/common.js"></script>
+<script>
+const id = qs("id");
+const t = DATA.theses.find(x => x.id === id);
+
+if (!t) {
+  mountPage("theses", `
+    <div class="container section">
+      <h1>Thesis not found</h1>
+      <p class="mt-1"><a href="theses.html">Back to archive</a></p>
+    </div>`);
+} else {
+  const sup = getFaculty(t.supervisorId);
+  const related = DATA.theses.filter(x=>x.id!==t.id && x.researchArea===t.researchArea).slice(0,3);
+
+  const body = `
+    <section class="page-header"><div class="container">
+      <p class="text-sm"><a href="theses.html">← Back to Thesis Archive</a></p>
+      <h1 class="mt-1">${esc(t.title)}</h1>
+    </div></section>
+    <section class="section"><div class="container">
+      <div class="grid-2">
+        <div class="card">
+          <h2 class="card-title">Overview</h2>
+          <div class="info-block"><div class="il">Department</div><div class="iv">${esc(t.department)}</div></div>
+          <div class="info-block"><div class="il">Research Area</div><div class="iv">${esc(t.researchArea)}</div></div>
+          <div class="info-block"><div class="il">Batch</div><div class="iv">${esc(t.batch)}</div></div>
+          <div class="info-block"><div class="il">Year</div><div class="iv">${esc(t.year)}</div></div>
+          <div class="info-block"><div class="il">Status</div><div class="iv">${esc(t.status)}</div></div>
+          <div class="info-block"><div class="il">Supervisor</div><div class="iv">${sup?`<a href="supervisor-detail.html?id=${encodeURIComponent(sup.id)}">${esc(sup.name)}</a>`:"—"}</div></div>
+        </div>
+        <div class="card">
+          <h2 class="card-title">Team Members</h2>
+          <ul class="pub-list">${t.students.map(s=>`<li>${esc(s)}</li>`).join("")}</ul>
+        </div>
+      </div>
+      <div class="card mt-2"><h2 class="card-title">Abstract</h2><p>${esc(t.abstract)}</p></div>
+      <div class="card"><h2 class="card-title">Methodology</h2><p>${esc(t.methodology)}</p></div>
+      <div class="card"><h2 class="card-title">Keywords</h2>
+        <div class="tag-list">${t.keywords.map(k=>`<span class="tag-plain">${esc(k)}</span>`).join("")}</div>
+      </div>
+      <hr class="divider">
+      <h2 class="section-title">Related Theses</h2>
+      ${related.length ? `<div class="thesis-list">${related.map(thesisCard).join("")}</div>` : `<div class="empty-state">No related thesis records.</div>`}
+    </div></section>`;
+
+  mountPage("theses", body);
+}
+</script>
+</body>
+</html>

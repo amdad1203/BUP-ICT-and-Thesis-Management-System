@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Student Workspace — BUP ICT &amp; CSE Thesis Management System</title>
+<link rel="icon" href="https://bup.edu.bd/public/upload/logo/202306071686132726.svg">
+<link rel="stylesheet" href="assets/styles.css">
+</head>
+<body>
+<script src="assets/data.js"></script>
+<script src="assets/common.js"></script>
+<script>
+if (!requireRole("student")) { /* redirected */ }
+else {
+
+const SECTIONS = [
+  ["overview","Overview"],["my-thesis","My Thesis"],["my-team","My Team"],
+  ["tasks","Tasks"],["timeline","Timeline"],["documents","Documents"],
+  ["meetings","Meetings"],["feedback","Feedback"],["notifications","Notifications"]
+];
+
+const section = qs("section") || "overview";
+const st = DATA.users.student;
+const thesis = DATA.theses.find(t=>t.id===st.thesisId);
+const sup = getFaculty(st.supervisorId);
+const team = DATA.teams.find(tm=>tm.thesisId===st.thesisId) || DATA.teams[0];
+
+function wsSidebar(active) {
+  return `
+  <aside class="ws-sidebar">
+    <div class="ws-title">Student Workspace</div>
+    <ul>
+      ${SECTIONS.map(([slug,label])=>`<li><a href="student-workspace.html?section=${slug}" class="${slug===active?'active':''}">${esc(label)}</a></li>`).join("")}
+    </ul>
+  </aside>`;
+}
+function wsHeader(title, sub) {
+  return `<div class="ws-header"><div><h2>${esc(title)}</h2><div class="sub">${esc(sub)}</div></div></div>`;
+}
+
+function overview() {
+  const tasks = DATA.tasks;
+  const completed = tasks.filter(t=>t.status==="Completed").length;
+  const total = tasks.length;
+  const pct = Math.round((completed/total)*100);
+  const upcomingMeeting = DATA.meetings[0];
+  const recentFeedback = DATA.feedback[0];
+
+  return `
+  ${wsHeader("Overview", "A summary of your current thesis work")}
+  <div class="dash-grid">
+    <div class="dash-tile"><div class="lbl">Current Thesis</div><div class="val" style="font-size:15px;">${thesis?esc(thesis.title):"—"}</div><div class="hint">Status: ${thesis?esc(thesis.status):"—"}</div></div>
+    <div class="dash-tile"><div class="lbl">Supervisor</div><div class="val" style="font-size:15px;">${sup?esc(sup.name):"—"}</div><div class="hint">${sup?esc(sup.designation):""}</div></div>
+    <div class="dash-tile"><div class="lbl">Research Area</div><div class="val" style="font-size:15px;">${thesis?esc(thesis.researchArea):"—"}</div></div>
+    <div class="dash-tile"><div class="lbl">Progress</div><div class="val">${pct}%</div><div class="progress"><div class="progress-bar" style="width:${pct}%"></div></div></div>
+  </div>
+  <div class="grid-2">
+    <div class="card"><h3 class="card-title">Pending Tasks</h3>
+      ${DATA.tasks.filter(t=>t.status!=="Completed").slice(0,4).map(t=>`<div class="task-card"><div class="t-title">${esc(t.title)}</div><div class="t-meta">Due ${esc(t.due)} · ${esc(t.status)}</div></div>`).join("")}
+    </div>
+    <div class="card"><h3 class="card-title">Upcoming Deadlines</h3>
+      <ul class="pub-list">${DATA.tasks.filter(t=>t.status!=="Completed").slice(0,4).map(t=>`<li><strong>${esc(t.due)}</strong> — ${esc(t.title)}</li>`).join("")}</ul>
+    </div>
+  </div>
+  <div class="grid-2 mt-2">
+    <div class="card"><h3 class="card-title">Recent Feedback</h3>
+      ${recentFeedback ? `<p><strong>${esc(recentFeedback.on)}</strong> — ${esc(recentFeedback.comment)}</p><p class="text-sm text-muted">Status: ${esc(recentFeedback.status)} · ${esc(recentFeedback.date)}</p>` : `<p class="text-muted">No feedback yet.</p>`}
+    </div>
+    <div class="card"><h3 class="card-title">Upcoming Meeting</h3>
+      ${upcomingMeeting ? `<p><strong>${esc(upcomingMeeting.title)}</strong></p><p class="text-sm">${esc(upcomingMeeting.date)} · ${esc(upcomingMeeting.time)} · ${esc(upcomingMeeting.location)}</p>` : `<p class="text-muted">No meetings scheduled.</p>`}
+    </div>
+  </div>
+  <div class="card mt-2"><h3 class="card-title">Thesis Lifecycle</h3>
+    <div class="timeline">${DATA.milestones.map(ms=>`<div class="timeline-item ${ms.status==='done'?'done':''} ${ms.status==='current'?'current':''}"><div class="t-label">${esc(ms.label)}</div><div class="t-date">${esc(ms.date)}</div></div>`).join("")}</div>
+  </div>`;
+}
+
+function myThesis() {
+  if (!thesis) return `<div class="empty-state">No thesis assigned.</div>`;
+  return `
+  ${wsHeader("My Thesis", "Thesis details and current status")}
+  <div class="card">
+    <h3 class="card-title">${esc(thesis.title)}</h3>
+    <div class="info-block"><div class="il">Supervisor</div><div class="iv">${sup?esc(sup.name):"—"}</div></div>
+    <div class="info-block"><div class="il">Research Area</div><div class="iv">${esc(thesis.researchArea)}</div></div>
+    <div class="info-block"><div class="il">Department</div><div class="iv">${esc(thesis.department)}</div></div>
+    <div class="info-block"><div class="il">Batch</div><div class="iv">${esc(thesis.batch)}</div></div>
+    <div class="info-block"><div class="il">Year</div><div class="iv">${esc(thesis.year)}</div></div>
+    <div class="info-block"><div class="il">Status</div><div class="iv">${esc(thesis.status)}</div></div>
+  </div>
+  <div class="card"><h3 class="card-title">Abstract</h3><p>${esc(thesis.abstract)}</p></div>
+  <div class="card"><h3 class="card-title">Methodology</h3><p>${esc(thesis.methodology)}</p></div>
+  <div class="card"><h3 class="card-title">Keywords</h3><div class="tag-list">${thesis.keywords.map(k=>`<span class="tag-plain">${esc(k)}</span>`).join("")}</div></div>`;
+}
+
+function myTeam() {
+  if (!team) return `<div class="empty-state">No team information.</div>`;
+  return `
+  ${wsHeader("My Team", "Team members working on the thesis")}
+  <div class="card"><div class="table-wrap"><table>
+    <thead><tr><th>Name</th><th>Student ID</th><th>Role</th></tr></thead>
+    <tbody>${team.members.map(mm=>`<tr><td>${esc(mm.name)}</td><td>${esc(mm.sid)}</td><td>${esc(mm.role)}</td></tr>`).join("")}</tbody>
+  </table></div>
+  <p class="mt-2"><a class="btn btn-secondary btn-sm" href="team-workspace.html?id=${team.id}">Open Team Workspace →</a></p></div>`;
+}
+
+function tasksView() {
+  const states = ["To Do","In Progress","Submitted","Revision Required","Completed"];
+  return `
+  ${wsHeader("Tasks", "Task board across the thesis lifecycle")}
+  <div class="task-board">
+    ${states.map(s=>`<div class="task-col"><h4>${esc(s)}</h4>
+      ${DATA.tasks.filter(t=>t.status===s).map(t=>`<div class="task-card"><div class="t-title">${esc(t.title)}</div><div class="t-meta">${esc(t.assignee)} · Due ${esc(t.due)}</div></div>`).join("")}
+    </div>`).join("")}
+  </div>`;
+}
+
+function timeline() {
+  return `
+  ${wsHeader("Timeline", "Milestones across the academic thesis lifecycle")}
+  <div class="card"><div class="timeline">
+    ${DATA.milestones.map(ms=>`<div class="timeline-item ${ms.status==='done'?'done':''} ${ms.status==='current'?'current':''}"><div class="t-label">${esc(ms.label)}</div><div class="t-date">${esc(ms.date)}</div></div>`).join("")}
+  </div></div>`;
+}
+
+function documents() {
+  return `
+  ${wsHeader("Documents", "Thesis documents and submissions")}
+  <div class="card"><div class="table-wrap"><table>
+    <thead><tr><th>Document</th><th>Size</th><th>Uploaded</th><th>By</th><th>Action</th></tr></thead>
+    <tbody>${DATA.documents.map(d=>`<tr><td>${esc(d.name)}</td><td>${esc(d.size)}</td><td>${esc(d.uploaded)}</td><td>${esc(d.uploadedBy)}</td><td><button class="btn btn-secondary btn-sm" onclick="alert('Opening document viewer.')">View</button></td></tr>`).join("")}</tbody>
+  </table></div></div>`;
+}
+
+function meetings() {
+  return `
+  ${wsHeader("Meetings", "Scheduled and past meetings with your supervisor")}
+  ${DATA.meetings.map(m=>`<div class="card"><h3 class="card-title">${esc(m.title)}</h3>
+    <div class="text-sm">${esc(m.date)} · ${esc(m.time)} · ${esc(m.location)}</div>
+    <p class="mt-1"><strong>Agenda:</strong> ${esc(m.agenda)}</p></div>`).join("")}`;
+}
+
+function feedback() {
+  return `
+  ${wsHeader("Feedback", "Supervisor feedback on submissions")}
+  ${DATA.feedback.map(f=>{
+    const supF = getFaculty(f.from);
+    return `<div class="card">
+      <h3 class="card-title">${esc(f.on)}</h3>
+      <div class="text-sm text-muted">From ${supF?esc(supF.name):"—"} · ${esc(f.date)} · <span class="badge ${f.status==='Approved'?'badge-green':'badge-amber'}">${esc(f.status)}</span></div>
+      <p class="mt-1">${esc(f.comment)}</p>
+    </div>`;
+  }).join("")}`;
+}
+
+function notifications() {
+  return `
+  ${wsHeader("Notifications", "Recent system and thesis notifications")}
+  <div class="card"><ul class="pub-list">
+    ${DATA.notifications.map(n=>`<li><strong>${esc(n.type)}</strong> — ${esc(n.text)} <span class="text-sm text-muted">(${esc(n.time)})</span></li>`).join("")}
+  </ul></div>`;
+}
+
+let content;
+switch(section) {
+  case "my-thesis": content = myThesis(); break;
+  case "my-team": content = myTeam(); break;
+  case "tasks": content = tasksView(); break;
+  case "timeline": content = timeline(); break;
+  case "documents": content = documents(); break;
+  case "meetings": content = meetings(); break;
+  case "feedback": content = feedback(); break;
+  case "notifications": content = notifications(); break;
+  default: content = overview();
+}
+
+const body = `
+  <section class="page-header"><div class="container">
+    <h1>Student Workspace</h1>
+    <p>${esc(st.name)} · ${esc(st.studentId)} · Department of ${esc(st.department)}</p>
+  </div></section>
+  <div class="container workspace-layout">
+    ${wsSidebar(section)}
+    <div class="ws-main">${content}</div>
+  </div>`;
+
+mountPage("workspace", body);
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Home — BUP ICT &amp; CSE Thesis Management System</title>
+<link rel="icon" href="https://bup.edu.bd/public/upload/logo/202306071686132726.svg">
+<link rel="stylesheet" href="assets/styles.css">
+</head>
+<body>
+<script src="assets/data.js"></script>
+<script src="assets/common.js"></script>
+<script>
+const totalFaculty = DATA.faculty.length;
+const totalTheses = DATA.theses.length;
+const totalAreas = DATA.researchAreas.length;
+const totalPubs = DATA.faculty.reduce((s,f)=>s+f.publications.length+f.conferencePapers.length,0);
+
+const featured = DATA.faculty.slice(0,3).map(facultyCard).join("");
+const recent = DATA.theses.slice(0,3).map(thesisCard).join("");
+const areas = DATA.researchAreas.slice(0,6).map(a => `
+  <div class="card">
+    <div class="card-title" style="font-size:16px;">${esc(a.name)}</div>
+    <div class="card-meta">${esc(a.department)} · ${a.count} thesis records</div>
+  </div>`).join("");
+
+const body = `
+  <section class="hero">
+    <div class="container hero-grid">
+      <div>
+        <h1>BUP ICT &amp; CSE Thesis Management System</h1>
+        <p>A centralized platform for exploring thesis work, research areas, supervisors, and managing thesis activities across ICT and CSE.</p>
+        <div class="hero-actions">
+          <a class="btn btn-primary" href="explore.html">Explore Theses</a>
+          <a class="btn btn-secondary" href="supervisors.html">Find a Supervisor</a>
+        </div>
+        <div class="dept-select">
+          <label for="homeDept">Department:</label>
+          <select id="homeDept" onchange="document.getElementById('homeDeptLabel').textContent = this.value==='Both'?'Both departments':'Department of '+this.value;">
+            <option value="Both">Both</option>
+            <option value="ICT">ICT</option>
+            <option value="CSE">CSE</option>
+          </select>
+          <span class="text-sm text-muted">Showing records for <strong id="homeDeptLabel">Both departments</strong>.</span>
+        </div>
+      </div>
+      <div>
+        <img class="hero-img" src="https://images.unsplash.com/photo-1523050854058-8df90110c9f1?auto=format&fit=crop&w=900&q=60" alt="University research environment">
+      </div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="container">
+      <h2 class="section-title">At a Glance</h2>
+      <p class="section-sub">Overview of faculty, thesis records, and research activity across both departments.</p>
+      <div class="stats">
+        <div class="stat"><div class="num">${totalFaculty}</div><div class="lbl">Faculty Members</div></div>
+        <div class="stat"><div class="num">${totalTheses}</div><div class="lbl">Thesis Records</div></div>
+        <div class="stat"><div class="num">${totalAreas}</div><div class="lbl">Research Areas</div></div>
+        <div class="stat"><div class="num">${totalPubs}</div><div class="lbl">Publications listed</div></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section section-alt">
+    <div class="container">
+      <h2 class="section-title">Research Areas</h2>
+      <p class="section-sub">Explore work across ICT and CSE departments.</p>
+      <div class="grid-3">${areas}</div>
+      <p class="mt-2"><a href="explore.html">View all research areas →</a></p>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="container">
+      <h2 class="section-title">Featured Faculty</h2>
+      <p class="section-sub">Faculty members from ICT and CSE departments.</p>
+      <div class="faculty-grid">${featured}</div>
+      <p class="mt-2"><a href="supervisors.html">View all supervisors →</a></p>
+    </div>
+  </section>
+
+  <section class="section section-alt">
+    <div class="container">
+      <h2 class="section-title">Recent Thesis</h2>
+      <p class="section-sub">Recent thesis work across both departments.</p>
+      <div class="thesis-list">${recent}</div>
+      <p class="mt-2"><a href="theses.html">View thesis archive →</a></p>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="container">
+      <h2 class="section-title">How It Works</h2>
+      <p class="section-sub">A simple workflow for students and supervisors.</p>
+      <div class="grid-3">
+        <div class="card"><div class="card-title">1. Explore</div><p>Browse previous and current thesis topics, research areas, and faculty profiles to understand the department's research landscape.</p></div>
+        <div class="card"><div class="card-title">2. Connect</div><p>Find a supervisor whose research interests align with your topic, and review their education, publications, and courses.</p></div>
+        <div class="card"><div class="card-title">3. Manage</div><p>Use the workspace to manage tasks, milestones, meetings, documents, and feedback across the thesis lifecycle.</p></div>
+      </div>
+    </div>
+  </section>
+`;
+
+mountPage("home", body);
+</script>
+</body>
+</html>

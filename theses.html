@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Thesis Archive — BUP ICT &amp; CSE Thesis Management System</title>
+<link rel="icon" href="https://bup.edu.bd/public/upload/logo/202306071686132726.svg">
+<link rel="stylesheet" href="assets/styles.css">
+</head>
+<body>
+<script src="assets/data.js"></script>
+<script src="assets/common.js"></script>
+<script>
+const areaOpts = ['<option value="All">All</option>'].concat([...new Set(DATA.theses.map(t=>t.researchArea))].map(a=>`<option value="${esc(a)}">${esc(a)}</option>`)).join("");
+const batches = [...new Set(DATA.theses.map(t=>t.batch))].sort().reverse();
+const batchOpts = ['<option value="All">All</option>'].concat(batches.map(b=>`<option value="${esc(b)}">${esc(b)}</option>`)).join("");
+const years = [...new Set(DATA.theses.map(t=>t.year))].sort().reverse();
+const yearOpts = ['<option value="All">All</option>'].concat(years.map(y=>`<option value="${esc(y)}">${esc(y)}</option>`)).join("");
+const supOpts = ['<option value="All">All</option>'].concat(DATA.faculty.map(f=>`<option value="${f.id}">${esc(f.name)}</option>`)).join("");
+const statusOpts = ['<option value="All">All</option>','<option value="Completed">Completed</option>','<option value="In Progress">In Progress</option>','<option value="Proposal">Proposal</option>'].join("");
+
+const body = `
+  <section class="page-header"><div class="container">
+    <h1>Thesis Archive</h1>
+    <p>Browse previous and current thesis records across ICT and CSE.</p>
+  </div></section>
+  <section class="section"><div class="container">
+    <div class="search-bar">
+      <input type="search" id="thQ" placeholder="Search title, keyword, research area...">
+      <button class="btn btn-primary" onclick="applyTheses()">Search</button>
+      <button class="btn btn-secondary" onclick="resetTheses()">Reset</button>
+    </div>
+    <div class="filter-bar">
+      <div class="filter-group"><label>Department</label><select id="thDept"><option value="All">All</option><option value="ICT">ICT</option><option value="CSE">CSE</option></select></div>
+      <div class="filter-group"><label>Research Area</label><select id="thArea">${areaOpts}</select></div>
+      <div class="filter-group"><label>Batch</label><select id="thBatch">${batchOpts}</select></div>
+      <div class="filter-group"><label>Year</label><select id="thYear">${yearOpts}</select></div>
+      <div class="filter-group"><label>Supervisor</label><select id="thSup">${supOpts}</select></div>
+      <div class="filter-group"><label>Status</label><select id="thStatus">${statusOpts}</select></div>
+    </div>
+    <div id="thesesResults"></div>
+  </div></section>`;
+
+mountPage("theses", body);
+
+function applyTheses() {
+  const q = document.getElementById("thQ").value.trim().toLowerCase();
+  const dept = document.getElementById("thDept").value;
+  const area = document.getElementById("thArea").value;
+  const batch = document.getElementById("thBatch").value;
+  const year = document.getElementById("thYear").value;
+  const sup = document.getElementById("thSup").value;
+  const status = document.getElementById("thStatus").value;
+
+  const list = DATA.theses.filter(t => {
+    if (dept !== "All" && t.department !== dept) return false;
+    if (area !== "All" && t.researchArea !== area) return false;
+    if (batch !== "All" && t.batch !== batch) return false;
+    if (year !== "All" && t.year !== year) return false;
+    if (sup !== "All" && t.supervisorId !== sup) return false;
+    if (status !== "All" && t.status !== status) return false;
+    if (q) {
+      const hay = (t.title + " " + t.abstract + " " + t.keywords.join(" ") + " " + t.researchArea).toLowerCase();
+      if (!hay.includes(q)) return false;
+    }
+    return true;
+  });
+
+  const box = document.getElementById("thesesResults");
+  if (!list.length) {
+    box.innerHTML = `<div class="empty-state">No thesis records match the current filters.</div>`;
+    return;
+  }
+  box.innerHTML = `<p class="text-sm text-muted mb-1">${list.length} record(s).</p>
+    <div class="thesis-list">${list.map(thesisCard).join("")}</div>`;
+}
+
+function resetTheses() {
+  document.getElementById("thQ").value = "";
+  document.getElementById("thDept").value = "All";
+  document.getElementById("thArea").value = "All";
+  document.getElementById("thBatch").value = "All";
+  document.getElementById("thYear").value = "All";
+  document.getElementById("thSup").value = "All";
+  document.getElementById("thStatus").value = "All";
+  applyTheses();
+}
+
+applyTheses();
+document.getElementById("thQ").addEventListener("keydown", e => { if (e.key === "Enter") applyTheses(); });
+</script>
+</body>
+</html>

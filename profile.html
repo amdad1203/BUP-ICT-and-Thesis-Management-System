@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Profile — BUP ICT &amp; CSE Thesis Management System</title>
+<link rel="icon" href="https://bup.edu.bd/public/upload/logo/202306071686132726.svg">
+<link rel="stylesheet" href="assets/styles.css">
+</head>
+<body>
+<script src="assets/data.js"></script>
+<script src="assets/common.js"></script>
+<script>
+if (!requireLogin()) { /* redirected */ }
+else {
+  const s = getSession();
+  let bodyHTML = "";
+
+  if (s.role === "student") {
+    const st = DATA.users.student;
+    const sup = getFaculty(st.supervisorId);
+    const thesis = DATA.theses.find(t=>t.id===st.thesisId);
+    bodyHTML = `
+      <section class="page-header"><div class="container"><h1>Profile</h1><p>Student account information.</p></div></section>
+      <section class="section"><div class="container"><div class="grid-2">
+        <div class="card">
+          <h2 class="card-title">Student Profile</h2>
+          <div class="info-block"><div class="il">Name</div><div class="iv">${esc(st.name)}</div></div>
+          <div class="info-block"><div class="il">Student ID</div><div class="iv">${esc(st.studentId)}</div></div>
+          <div class="info-block"><div class="il">Email</div><div class="iv">${esc(st.email)}</div></div>
+          <div class="info-block"><div class="il">Department</div><div class="iv">${esc(st.department)}</div></div>
+          <div class="info-block"><div class="il">Batch</div><div class="iv">${esc(st.batch)}</div></div>
+          <div class="info-block"><div class="il">Thesis</div><div class="iv">${thesis?esc(thesis.title):"—"}</div></div>
+          <div class="info-block"><div class="il">Supervisor</div><div class="iv">${sup?esc(sup.name):"—"}</div></div>
+        </div>
+        <div class="card">
+          <h2 class="card-title">Supervisor Profile</h2>
+          ${sup?`<div class="flex gap-2 items-center">
+            <img class="faculty-photo" src="${esc(sup.photo)}" alt="${esc(sup.name)}" onerror="this.style.display='none'">
+            <div>
+              <h3 style="font-size:18px;color:#315F3A;">${esc(sup.name)}</h3>
+              <p class="text-sm text-muted">${esc(sup.designation)} · ${esc(sup.department)}</p>
+              <p class="text-sm"><a href="supervisor-detail.html?id=${sup.id}">View full profile →</a></p>
+            </div>
+          </div>` : `<p class="text-muted">No supervisor assigned.</p>`}
+        </div>
+      </div></div></section>`;
+  } else if (s.role === "supervisor") {
+    const f = getFaculty(DATA.users.supervisor.facultyId);
+    bodyHTML = `
+      <section class="page-header"><div class="container"><h1>Profile</h1><p>Supervisor profile.</p></div></section>
+      <section class="section"><div class="container">
+        <div class="card">
+          <div class="flex gap-2 items-center flex-wrap">
+            <img class="faculty-photo-lg" src="${esc(f.photo)}" alt="${esc(f.name)}" onerror="this.style.display='none'">
+            <div>
+              <h2 class="card-title">${esc(f.name)}</h2>
+              <p class="text-muted">${esc(f.designation)} · ${esc(f.departmentFull)}</p>
+              <p class="text-muted">${esc(f.email)}</p>
+              <p class="text-sm text-muted">Last updated: ${esc(f.lastUpdated)}</p>
+            </div>
+          </div>
+        </div>
+        <div class="card"><h3 class="card-title">Research Areas</h3>
+          <div class="tag-list">${f.researchAreas.map(a=>`<span class="tag">${esc(a)}</span>`).join("")}</div>
+        </div>
+        <div class="card"><h3 class="card-title">Biography</h3><p>${esc(f.bio)}</p></div>
+        <p class="mt-2"><a class="btn btn-secondary" href="supervisor-detail.html?id=${f.id}">View full public profile →</a></p>
+      </div></section>`;
+  } else {
+    bodyHTML = `
+      <section class="page-header"><div class="container"><h1>Profile</h1><p>Administrator account.</p></div></section>
+      <section class="section"><div class="container"><div class="card">
+        <h2 class="card-title">Administrator Profile</h2>
+        <div class="info-block"><div class="il">Name</div><div class="iv">${esc(DATA.users.admin.name)}</div></div>
+        <div class="info-block"><div class="il">Role</div><div class="iv">${esc(DATA.users.admin.role)}</div></div>
+      </div></div></section>`;
+  }
+
+  mountPage("", bodyHTML);
+}
+</script>
+</body>
+</html>
